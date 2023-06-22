@@ -7,8 +7,8 @@ CREATE TABLE clientes (
 
 CREATE TABLE pedidos(
     idPedidos INTEGER PRIMARY KEY ,
-    IdCliente INTEGER NOT NULL, 
-    dataPedido TEXT NOT NULL,
+    idCliente INTEGER NOT NULL, 
+    dataPedido INTEGER NOT NULL,
     status TEXT NOT NULL,
     FOREIGN KEY (IdCliente) REFERENCES clientes(IdCliente)
 );
