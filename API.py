@@ -147,7 +147,7 @@ def getEstoquebyCliente(id):
     q = "SELECT * FROM estoque WHERE idCliente = {}".format(id)
     return jsonify(querry(q))
 
-@API.route("/estoque/idt/<int:id>", methods = ['GET']) #retorna cliente por Tipo de Animal
+@API.route("/estoque/idt/<int:id>", methods = ['GET']) #retorna estoque por Tipo de Animal
 def getEstoquebyTipo(id):
     q = "SELECT * FROM estoque WHERE idTipoAnimal = {}".format(id)
     return jsonify(querry(q))
