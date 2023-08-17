@@ -24,6 +24,18 @@ def getClientes():
     q = "SELECT * FROM clientes;"
     return jsonify(querry(q))
 
+@API.route("/clientes", methods = ["GET"]) #login
+def getID(username):
+    user = jsonify(username)
+    q = "SELECT FROM clientes WHERE username = {0}".format(user[0])
+    return jsonify(querry(q))
+
+@API.route("/clientes/login", methods = ["GET"]) #retorna ID de cliente a partir do username
+def loginCliente(login):
+    login = jsonify(login)
+    q = "SELECT FROM clientes WHERE username = {0},senha = {1}".format(login[0],login[1])
+    return jsonify(querry(q))
+
 @API.route("/clientes/idc/<int:id>", methods=['GET']) #retorna cliente de acordo com ID
 def getClientsbyId(id):
     q = "SELECT * FROM clientes WHERE idCliente = {0};".format(id)
@@ -32,7 +44,8 @@ def getClientsbyId(id):
 @API.route("/clientes/idc/<int:id>", methods=['PUT']) #edita cliente de acordo com ID
 def editClient(id):
     altClient = request.get_json()
-    q = "UPDATE clientes SET nomeEmpresa = '{0}', nomeRepresentante = '{1}', numRepresentante = '{2}' WHERE idCliente = {3};".format(altClient[1],altClient[2],altClient[3],id)
+    q = "UPDATE clientes SET nomeEmpresa = '{0}', nomeRepresentante = '{1}', numRepresentante = '{2}', username = '{3}' senha = '{5}' WHERE idCliente = {3};".format(
+        altClient[1],altClient[2],altClient[3],altClient[4],altClient[5],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -42,7 +55,8 @@ def editClient(id):
 @API.route("/clientes", methods = ['POST']) #adiciona novo cliente
 def addClientes():
     novoCliente = request.get_json()
-    q = "INSERT INTO clientes (nomeEmpresa, nomeRepresentante, numRepresentante) VALUES ('{0}','{1}','{2}')".format(novoCliente[0],novoCliente[1],novoCliente[2])
+    q = "INSERT INTO clientes (nomeEmpresa, nomeRepresentante, numRepresentante, username,senha) VALUES ('{0}','{1}','{2}','{3}','{4}')".format(
+        novoCliente[0],novoCliente[1],novoCliente[2],novoCliente[3],novoCliente[4])
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -172,6 +186,17 @@ def usarEstoquebyCliente(id): #tambem checa se algum contador de animais chegou 
         return jsonify("sucesso")
     else:
         return jsonify(result)
+
+@API.route("/detalhesPedido/", methods = ['POST']) #retona os detalhes de um pedido de acordo com o id do pedido
+def addDetPedidosbyPedidos():
+    novoDetPedido = request.get_json()
+    q = "INSERT INTO detalhesPedidos (idPedidos, idTipoAnimal, quantidade) VALUES ('{0}',unixepoch('{1}'),'{2}')".format(novoDetPedido[0],novoDetPedido[1],novoDetPedido[2])
+    result = querry(q)
+    if result == []:
+        return jsonify("sucesso")
+    else:
+        return jsonify(result)
+
 
 @API.route("/detalhesPedido/idp/<int:id>", methods = ['GET']) #retona os detalhes de um pedido de acordo com o id do pedido
 def getDetPedidosbyPedidos(id):

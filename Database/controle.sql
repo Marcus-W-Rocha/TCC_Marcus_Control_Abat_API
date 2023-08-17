@@ -2,7 +2,9 @@ CREATE TABLE clientes (
     idCliente INTEGER PRIMARY KEY,
     nomeEmpresa TEXT NOT NULL,
     nomeRepresentante TEXT NOT NULL,
-    numRepresentante TEXT NOT NULL
+    numRepresentante TEXT NOT NULL,
+    username TEXT NOT NULL,
+    senha TEXT NOT NULL
 );
 
 CREATE TABLE pedidos(
