@@ -47,3 +47,11 @@ CREATE TABLE abates(
     FOREIGN KEY (idPedidos) REFERENCES pedidos(idPedidos),
     FOREIGN KEY (idTipoAnimal) REFERENCES tipoAnimais(idTipoAnimal)
 ); 
+
+CREATE TABLE token(
+    idCliente INTEGER NOT NULL, 
+    tokenCliente TEXT PRIMARY KEY,
+    data INTEGER NOT NULL,
+    FOREIGN KEY (IdCliente) REFERENCES clientes(idCliente)
+
+)
