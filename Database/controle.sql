@@ -3,6 +3,7 @@ CREATE TABLE clientes (
     nomeEmpresa TEXT NOT NULL,
     nomeRepresentante TEXT NOT NULL,
     numRepresentante TEXT NOT NULL,
+    username TEXT NOT NULL,
     senha TEXT NOT NULL
 );
 
