@@ -2,7 +2,8 @@ CREATE TABLE clientes (
     idCliente INTEGER PRIMARY KEY,
     nomeEmpresa TEXT NOT NULL,
     nomeRepresentante TEXT NOT NULL,
-    numRepresentante TEXT NOT NULL
+    numRepresentante TEXT NOT NULL,
+    senha TEXT NOT NULL
 );
 
 CREATE TABLE pedidos(
@@ -19,6 +20,7 @@ CREATE TABLE tipoAnimais(
 );
 
 CREATE TABLE detalhesPedidos(
+    idDetalhe INTEGER PRIMARY KEY,
     idPedidos INTEGER NOT NULL,
     idTipoAnimal INTEGER NOT NULL,
     quantidade INTEGER NOT NULL,
@@ -27,6 +29,7 @@ CREATE TABLE detalhesPedidos(
 );
 
 CREATE TABLE estoque(
+    idEstoque INTEGER PRIMARY KEY,
     idCliente INTEGER NOT NULL,
     idTipoAnimal INTEGER NOT NULL,
     quantidade INTEGER NOT NULL,
@@ -38,8 +41,8 @@ CREATE TABLE abates(
     idAbate INTEGER PRIMARY KEY,
     idPedidos INTEGER NOT NULL,
     idTipoAnimal  INTEGER NOT NULL,
-    peso INTEGER NOT NULL,
-    viabilidade BOOLEAN NOT NULL,
+    peso TEXT NOT NULL,
+    condenacoes INTEGER NOT NULL,
     FOREIGN KEY (idPedidos) REFERENCES pedidos(idPedidos),
     FOREIGN KEY (idTipoAnimal) REFERENCES tipoAnimais(idTipoAnimal)
 ); 

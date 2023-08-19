@@ -32,7 +32,7 @@ def getClientsbyId(id):
 @API.route("/clientes/idc/<int:id>", methods=['PUT']) #edita cliente de acordo com ID
 def editClient(id):
     altClient = request.get_json()
-    q = "UPDATE clientes SET nomeEmpresa = '{0}', nomeRepresentante = '{1}', numRepresentante = '{2}' WHERE idCliente = {3};".format(altClient[1],altClient[2],altClient[3],id)
+    q = "UPDATE clientes SET nomeRepresentante = '{0}', numRepresentante = '{1}', senha = {2} WHERE idCliente = {3};".format(altClient[0],altClient[1],altClient[2],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -42,7 +42,7 @@ def editClient(id):
 @API.route("/clientes", methods = ['POST']) #adiciona novo cliente
 def addClientes():
     novoCliente = request.get_json()
-    q = "INSERT INTO clientes (nomeEmpresa, nomeRepresentante, numRepresentante) VALUES ('{0}','{1}','{2}')".format(novoCliente[0],novoCliente[1],novoCliente[2])
+    q = "INSERT INTO clientes (nomeEmpresa, nomeRepresentante, numRepresentante, senha) VALUES ('{0}','{1}','{2}','{3}')".format(novoCliente[0],novoCliente[1],novoCliente[2],novoCliente[3])
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -93,9 +93,10 @@ def getPedidosbyDate(date):
         result[a] = tuple(b)
     return jsonify(result)
 
-@API.route("/pedidos/status/<string:status>", methods=['GET']) #retorna todos os pedidos de acordo com o status
+@API.route("/pedidos/status/<string:status>", methods=['GET']) #retorna todos os pedidos de acordo com o status e o cliente
 def getPedidosbyStatus(status):
-    q = "SELECT * FROM pedidos WHERE status = '{}';".format(status)
+    cliente = request.get_json
+    q = "SELECT * FROM pedidos WHERE idCliente = {0} status = '{1}';".format(cliente[0],status)
     return jsonify(querry(q))
 
 @API.route("/pedidos/date/byPeriod/<int:id>", methods=['GET']) #retorna todos os pedidos dentro de um intervalo de tempo
@@ -112,7 +113,7 @@ def getPedidosbyPeriod(id): #data dever ser enviada no tipo yyyy-mm-dd (alterave
 @API.route("/pedidos/idp/<int:id>", methods=['PUT']) #edita pedido por ID
 def editPedidosbyID(id):
     editPedi = request.get_json()
-    q = "UPDATE pedidos SET IdCliente = {0}, dataPedido = unixepoch('{1}'), status = '{2}' WHERE idPedidos = {3};".format(editPedi[0],editPedi[1],editPedi[2],id)
+    q = "UPDATE pedidos SET dataPedido = unixepoch('{0}'), status = '{1}' WHERE idPedidos = {3};".format(editPedi[0],editPedi[1],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -173,9 +174,38 @@ def usarEstoquebyCliente(id): #tambem checa se algum contador de animais chegou 
     else:
         return jsonify(result)
 
-@API.route("/detalhesPedido/idp/<int:id>", methods = ['GET']) #retona os detalhes de um pedido de acordo com o id do pedido
+@API.route("/detalhesPedido/idp/<int:id>", methods = ['POST']) #Adiciona detalhes de acordo com o id de pedido
+def addDetPedidosbyPedidos(id):
+    novoDet = request.get_json()
+    q = "INSERT INTO detalhesPedidos (idPedidos, idTipoAnimal, quantidade) VALUES ({0},{1},{2})".format(id,novoDet[0],novoDet[1])
+    result = querry(q)
+    if result == []:
+        return jsonify("sucesso")
+    else:
+        return jsonify(result)
+
+@API.route("/detalhesPedido/idp/<int:id>", methods = ['GET']) #retorna os detalhes de um pedido de acordo com o id do pedido
 def getDetPedidosbyPedidos(id):
     q = "SELECT * FROM detalhesPedidos WHERE idPedidos = {}".format(id)
+    return jsonify(querry(q))
+
+
+@API.route("/detalhesPedido/idd/<int:id>", methods=['PUT']) #edita detalhes de pedidos por id
+def editDetPedidobyID(id):
+    editDet = request.get_json()
+    q = "UPDATE detalhesPedidos SET IdPedidos = {0}, idTipoAnimal = {1}, quantidade = {2}, WHERE idDetalhe = {4};".format(editDet[0],editDet[1],editDet[2],id)
+    print(q)
+    result = querry(q)
+    if result == []:
+        return jsonify("sucesso")
+    else:
+        return jsonify(result)
+
+
+
+@API.route("/detalhesPedido/idp/<int:id>", methods = ['DELETE']) #deleta detalhes de acordo com o pedido
+def deleteDetPedidobyPedido(id):
+    q = "DELETE FROM detalhesPedidos WHERE idPedidos = {0}".format(id)
     return jsonify(querry(q))
 
 @API.route("/tipoAnimais", methods = ['GET']) #retorna todos os tipos de animais
