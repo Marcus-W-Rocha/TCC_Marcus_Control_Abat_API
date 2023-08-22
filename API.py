@@ -1,6 +1,9 @@
 from flask import Flask, jsonify, request
-from datetime import datetime
+from datetime import datetime,timedelta
+import time
 import sqlite3
+import json
+import uuid
 
 API = Flask(__name__)
 def querry(querry): #inicia conexao para cada request, tambem força o uso de chaves estrangeiras
@@ -19,22 +22,60 @@ def querry(querry): #inicia conexao para cada request, tambem força o uso de ch
         if conec:
             conec.close()
 
+@API.before_request
+def before_request():    
+    if not "/login" in request.url:
+        token = request.headers.get('token',default=False)
+    
+        if token == False:
+            return "Token nao existente"
+        q = "SELECT * FROM token WHERE tokenCliente = '{0}' AND data >= {1}".format(token,time.mktime(datetime.now().timetuple())) 
+        a = querry(q)
+        if len(a) == 0:
+            return "token invalido"
+    # You can perform any actions here
+
+
 @API.route("/clientes", methods = ["GET"]) #retorna todos os clientes
 def getClientes():
     q = "SELECT * FROM clientes;"
     return jsonify(querry(q))
 
-@API.route("/clientes", methods = ["GET"]) #login
-def getID(username):
-    user = jsonify(username)
-    q = "SELECT FROM clientes WHERE username = {0}".format(user[0])
-    return jsonify(querry(q))
+@API.route("/clientes/login", methods = ["POST"]) #login
+def loginCliente():
+    login = request.get_json()
+    print(login, "===================")
+    q = "SELECT * FROM clientes WHERE username = '{0}' AND senha = '{1}'".format(login["user"],login["senha"])
+    a = querry(q)
+    if len(a)==0:
+        return "Credenciais Invalidas"
+    a = list(a[0])
+    a.pop()
 
-@API.route("/clientes/login", methods = ["GET"]) #retorna ID de cliente a partir do username
-def loginCliente(login):
-    login = jsonify(login)
-    q = "SELECT FROM clientes WHERE username = {0},senha = {1}".format(login[0],login[1])
-    return jsonify(querry(q))
+    q = querry("SELECT * FROM token where idCliente = '{0}' and data >={1}".format(a[0],time.mktime((datetime.now()).timetuple())))
+    if len(q)!= 0:
+        q = q[0][1]
+        a.append(q)
+        return jsonify(a)
+    newToken = uuid.uuid4()
+    x = 0
+    while True:
+        newToken = uuid.uuid5(newToken,login["senha"])
+        newToken = uuid.uuid5(newToken,login["user"])
+        newToken = uuid.uuid5(newToken,datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
+        q = "SELECT * FROM token where tokenCliente = '{0}'".format(newToken)
+        data = time.mktime((datetime.now()+timedelta(1)).timetuple())
+        if len(querry(q))==0:
+            querry("DELETE FROM token WHERE idCliente = {0}".format(a[0]))
+            querry("INSERT INTO token (idCliente, tokenCliente, data) VALUES ('{0}','{1}','{2}')".format(a[0],newToken,data))
+            break
+        if x > 10:
+            break
+        x += 1
+
+    a.append(newToken)
+    return jsonify(a)
+        
 
 @API.route("/clientes/idc/<int:id>", methods=['GET']) #retorna cliente de acordo com ID
 def getClientsbyId(id):
@@ -209,7 +250,6 @@ def getDetPedidosbyPedidos(id):
 def editDetPedidobyID(id):
     editDet = request.get_json()
     q = "UPDATE detalhesPedidos SET IdPedidos = {0}, idTipoAnimal = {1}, quantidade = {2}, WHERE idDetalhe = {4};".format(editDet[0],editDet[1],editDet[2],id)
-    print(q)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -257,7 +297,6 @@ def addAbate():
 def editAbatebyID(id):
     editAbat = request.get_json()
     q = "UPDATE abates SET IdPedidos = {0}, idTipoAnimal = {1}, peso = {2}, viabilidade = '{3}' WHERE idAbate = {4};".format(editAbat[0],editAbat[1],editAbat[2],editAbat[3],id)
-    print(q)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -273,4 +312,4 @@ def deleteAbate(id):
     else:
         return jsonify(result)
 
-API.run(port = 3000, host = "localhost", debug = True)
+API.run(port = 3000, host = "0.0.0.0", debug = True)
