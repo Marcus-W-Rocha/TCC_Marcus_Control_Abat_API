@@ -12,8 +12,8 @@ def querry(querry): #inicia conexao para cada request, tambem força o uso de ch
         cursor = conec.cursor()
         cursor.execute("PRAGMA foreign_keys = ON;")
         cursor.execute(querry)
-        conec.commit()
         record = cursor.fetchall()
+        conec.commit()
         cursor.close()
         return record
     except sqlite3.Error as error:
@@ -26,14 +26,12 @@ def querry(querry): #inicia conexao para cada request, tambem força o uso de ch
 def before_request():    
     if not "/login" in request.url:
         token = request.headers.get('token',default=False)
-    
         if token == False:
             return "Token nao existente"
         q = "SELECT * FROM token WHERE tokenCliente = '{0}' AND data >= {1}".format(token,time.mktime(datetime.now().timetuple())) 
         a = querry(q)
         if len(a) == 0:
             return "token invalido"
-    # You can perform any actions here
 
 
 @API.route("/clientes", methods = ["GET"]) #retorna todos os clientes
@@ -44,7 +42,6 @@ def getClientes():
 @API.route("/clientes/login", methods = ["POST"]) #login
 def loginCliente():
     login = request.get_json()
-    print(login, "===================")
     q = "SELECT * FROM clientes WHERE username = '{0}' AND senha = '{1}'".format(login["user"],login["senha"])
     a = querry(q)
     if len(a)==0:
@@ -85,8 +82,8 @@ def getClientsbyId(id):
 @API.route("/clientes/idc/<int:id>", methods=['PUT']) #edita cliente de acordo com ID
 def editClient(id):
     altClient = request.get_json()
-    q = "UPDATE clientes SET nomeEmpresa = '{0}', nomeRepresentante = '{1}', numRepresentante = '{2}', username = '{3}' senha = '{5}' WHERE idCliente = {3};".format(
-        altClient[1],altClient[2],altClient[3],altClient[4],altClient[5],id)
+    q = "UPDATE clientes SET nomeRepresentante = '{0}', numRepresentante = '{1}', senha = '{2}' WHERE idCliente = {3};".format(
+        altClient["nomeRepresentante"],altClient['contatoRepre'],altClient['senha'],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -116,12 +113,9 @@ def deleteClientes(id):
 @API.route("/pedidos", methods = ['POST']) #adiciona pedido
 def addPedidos():
     novoPedido = request.get_json()
-    q = "INSERT INTO pedidos (idCliente, dataPedido, status) VALUES ('{0}',unixepoch('{1}'),'{2}')".format(novoPedido[0],novoPedido[1],novoPedido[2])
+    q = "INSERT INTO pedidos (idCliente, dataPedido, status) VALUES ('{0}',unixepoch('{1}'),'{2}') RETURNING *".format(novoPedido["idCliente"],novoPedido["dataPedido"],novoPedido["status"])
     result = querry(q)
-    if result == []:
-        return jsonify("sucesso")
-    else:
-        return jsonify(result)
+    return jsonify(result)
 
 @API.route("/pedidos", methods = ["GET"]) #retorna todos os pedidos
 def getPedidos():
@@ -148,27 +142,23 @@ def getPedidosbyDate(date):
         result[a] = tuple(b)
     return jsonify(result)
 
-@API.route("/pedidos/status/<string:status>", methods=['GET']) #retorna todos os pedidos de acordo com o status e o cliente
+@API.route("/pedidos/status/<string:status>", methods=['POST']) #retorna todos os pedidos de acordo com o status e o cliente
 def getPedidosbyStatus(status):
-    cliente = request.get_json
-    q = "SELECT * FROM pedidos WHERE idCliente = {0} status = '{1}';".format(cliente[0],status)
+    cliente = request.get_json()
+    q = "SELECT * FROM pedidos WHERE idCliente = {0} AND status = '{1}';".format(cliente["idCliente"],status)
     return jsonify(querry(q))
 
-@API.route("/pedidos/date/byPeriod/<int:id>", methods=['GET']) #retorna todos os pedidos dentro de um intervalo de tempo
+@API.route("/pedidos/date/byPeriod/<int:id>", methods=['POST']) #retorna todos os pedidos dentro de um intervalo de tempo
 def getPedidosbyPeriod(id): #data dever ser enviada no tipo yyyy-mm-dd (alteravel)
     dates = request.get_json()
-    q = "SELECT * FROM pedidos WHERE idCliente = {0} AND dataPedido BETWEEN unixepoch('{1}') and unixepoch('{2}');".format(id,dates[0],dates[1])
+    q = "SELECT * FROM pedidos WHERE idCliente = {0} AND dataPedido BETWEEN unixepoch('{1}') and unixepoch('{2}');".format(id,dates["start"],dates["end"])
     result = querry(q)
-    for a in range(0,len(result)):
-        b = list(result[a])
-        b[2] = datetime.fromtimestamp(int(result[a][2])).strftime("%d/%m/%Y")
-        result[a] = tuple(b)
     return jsonify(result)
 
 @API.route("/pedidos/idp/<int:id>", methods=['PUT']) #edita pedido por ID
 def editPedidosbyID(id):
     editPedi = request.get_json()
-    q = "UPDATE pedidos SET dataPedido = unixepoch('{0}'), status = '{1}' WHERE idPedidos = {3};".format(editPedi[0],editPedi[1],id)
+    q = "UPDATE pedidos SET dataPedido = unixepoch('{0}'), status = '{1}' WHERE idPedidos = {2};".format(editPedi["dataPedido"],editPedi["status"],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -196,7 +186,8 @@ def deletePedidosbyCliente(id):
 @API.route("/estoque", methods = ["GET"]) #retorna estoque
 def getEstoque():
     q = "SELECT * FROM estoque"
-    return jsonify(querry(q))
+    b = querry(q)
+    return jsonify(b)
 
 @API.route("/estoque/idc/<int:id>", methods = ['GET']) #retorna estoque por cliente
 def getEstoquebyCliente(id):
@@ -229,10 +220,15 @@ def usarEstoquebyCliente(id): #tambem checa se algum contador de animais chegou 
     else:
         return jsonify(result)
 
-@API.route("/detalhesPedido/", methods = ['POST']) #retona os detalhes de um pedido de acordo com o id do pedido
+@API.route("/detalhesPedido/", methods = ['POST']) #novo detalhe
 def addDetPedidosbyPedidos():
     novoDetPedido = request.get_json()
-    q = "INSERT INTO detalhesPedidos (idPedidos, idTipoAnimal, quantidade) VALUES ('{0}',unixepoch('{1}'),'{2}')".format(novoDetPedido[0],novoDetPedido[1],novoDetPedido[2])
+    stringteste = ",".join([
+        "({0},{1},{2})".format(det["idPedido"],det["idTipoAnimal"],det["quantidade"])
+        for det in novoDetPedido  
+    ])
+    q = "INSERT INTO detalhesPedidos (idPedidos, idTipoAnimal, quantidade) VALUES {}".format(stringteste)
+    
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -249,7 +245,7 @@ def getDetPedidosbyPedidos(id):
 @API.route("/detalhesPedido/idd/<int:id>", methods=['PUT']) #edita detalhes de pedidos por id
 def editDetPedidobyID(id):
     editDet = request.get_json()
-    q = "UPDATE detalhesPedidos SET IdPedidos = {0}, idTipoAnimal = {1}, quantidade = {2}, WHERE idDetalhe = {4};".format(editDet[0],editDet[1],editDet[2],id)
+    q = "UPDATE detalhesPedidos SET IdPedidos = {0}, idTipoAnimal = {1}, quantidade = {2} WHERE idDetalhe = {3};".format(editDet["idPedido"],editDet["idTipoAnimal"],editDet["quantidade"],id)
     result = querry(q)
     if result == []:
         return jsonify("sucesso")
@@ -263,10 +259,22 @@ def deleteDetPedidobyPedido(id):
     q = "DELETE FROM detalhesPedidos WHERE idPedidos = {0}".format(id)
     return jsonify(querry(q))
 
+@API.route("/detalhesPedido/idd/<int:id>", methods = ['DELETE']) #deleta detalhes de acordo com o Id
+def deleteDetPedidobyId(id):
+    q = "DELETE FROM detalhesPedidos WHERE idDetalhe = {0}".format(id)
+    return jsonify(querry(q))
+
 @API.route("/tipoAnimais", methods = ['GET']) #retorna todos os tipos de animais
 def getTipoAnimais():
     q = "SELECT * FROM tipoAnimais"
-    return jsonify(querry(q))
+    response = (querry(q))
+    return jsonify(response)
+
+@API.route("/tipoAnimais/idta/<int:id>", methods = ['GET']) #retorna todos os tipos de animais de acordo com o id
+def getTipoAnimaisbyId(id):
+    q = "SELECT * FROM tipoAnimais WHERE idTipoAnimal = {}".format(id)
+    response = (querry(q))
+    return jsonify(response)
 
 @API.route("/abates", methods = ['GET']) #retorna todos os abates
 def getAbates():
