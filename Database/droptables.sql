@@ -15,6 +15,9 @@ UPDATE clientes SET senha = 'e10adc3949ba59abbe56e057f20f883e' WHERE idCliente =
 
 INSERT INTO abates (idPedidos, idTipoAnimal, peso, condenacoes) VALUES (2,1,'75,65,60,70',0),(2,2,'25',0),(2,3,'10,11',1)
 
+DELETE FROM pedidos where idPedidos =4
+
+'.schema' > schema.sql
 
 /* DROP TABLE clientes;
 DROP TABLE clientes;
