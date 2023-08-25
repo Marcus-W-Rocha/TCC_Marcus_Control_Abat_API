@@ -130,7 +130,8 @@ def getPedidosbyId(id):
 @API.route("/pedidos/idc/<int:id>", methods=['GET']) #retona pedido de um cliente
 def getPedidosbyClienteId(id):
     q = "SELECT * FROM pedidos WHERE idCliente = {0};".format(id)
-    return jsonify(querry(q))
+    result = querry(q)
+    return jsonify(result)
 
 @API.route("/pedidos/date/<string:date>", methods=['GET']) #retona todos os pedidos de uma data
 def getPedidosbyDate(date): 
