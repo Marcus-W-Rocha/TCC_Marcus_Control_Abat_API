@@ -43,7 +43,7 @@ CREATE TABLE abates(
     idPedidos INTEGER NOT NULL,
     idTipoAnimal  INTEGER NOT NULL,
     peso TEXT NOT NULL,
-    condenacoes INTEGER NOT NULL,
+    condenacoes TEXT NOT NULL,
     FOREIGN KEY (idPedidos) REFERENCES pedidos(idPedidos),
     FOREIGN KEY (idTipoAnimal) REFERENCES tipoAnimais(idTipoAnimal)
 ); 
