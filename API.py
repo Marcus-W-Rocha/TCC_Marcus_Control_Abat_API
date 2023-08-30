@@ -57,6 +57,7 @@ def loginCliente():
     a.pop()
     a.pop()
     a.append(temp)
+    
     q = querry("SELECT * FROM token where idCliente = '{0}' and data >={1}".format(a[0],time.mktime((datetime.now()).timetuple())))
     if len(q)!= 0:
         q = q[0][1]
@@ -182,9 +183,7 @@ def getPedidosbyPeriod(id): #data dever ser enviada no tipo yyyy-mm-dd (alterave
 @API.route("/pedidos/idp/<int:id>", methods=['PUT']) #edita pedido por ID
 def editPedidosbyID(id):
     editPedi = request.get_json()
-    print("UPDATE pedidos SET dataPedido = unixepoch('{0}'), status = '{1}' WHERE idPedidos = {2};".format(editPedi["dataPedido"],editPedi["status"],id))
     result = querry("UPDATE pedidos SET dataPedido = unixepoch('{0}'), status = '{1}' WHERE idPedidos = {2};".format(editPedi["dataPedido"],editPedi["status"],id))
-    print(result)
     return result
 
 @API.route("/pedidos/idp/<int:id>", methods=['DELETE']) #deleta pedidos por ID
@@ -261,23 +260,18 @@ def usarEstoquebyCliente(id): #tambem checa se algum contador de animais chegou 
                     "quant":a["quantidade"]
                 })
     estoque = querry("SELECT * FROM estoque WHERE idCliente = {}".format(id))
-    print(estoque)
-    print(list)
     for a in list:
         est = [
             b
             for b in estoque
             if b[2] == a["idTipoAnimal"]
         ]
-        print(est)
         if len(est) != 0 and 0 == a["quant"]:
             querry("DELETE FROM estoque WHERE idCliente = {} AND idTipoAnimal = {}".format(id,a["idTipoAnimal"]))
         if len(est) != 0 and est[0][2]!=a["quant"]:
             querry("UPDATE estoque SET quantidade = {0} WHERE idCliente = {1} AND idTipoAnimal = {2}".format(a["quant"],id,a["idTipoAnimal"]))
         elif len(est)==0 and 0 != a["quant"]:
-            print("INSERT INTO estoque (idCliente, idTipoAnimal, quantidade) VALUES ({},{},{});".format(id,a["idTipoAnimal"],a["quant"]))
             a = querry("INSERT INTO estoque (idCliente, idTipoAnimal, quantidade) VALUES ({},{},{});".format(id,a["idTipoAnimal"],a["quant"]))
-            print(a)
                 
     return ("sucesso")
 
@@ -358,13 +352,11 @@ def getAbatesbyPedido(id):
 @API.route("/abates/<int:id>", methods = ['POST']) #adiciona um abate
 def addAbate(id):
     novoAbate = request.get_json()
-    print(novoAbate)
     stringteste = ",".join([
-        "({0},{1},{2},{3})".format(id,abate["idTipoAnimal"],abate["pesoViavel"],abate["pesoCondenado"])
+        "({0},{1},'{2}','{3}')".format(id,abate["idTipoAnimal"],abate["pesoViavel"],abate["pesoCondenado"])
         for abate in novoAbate  
     ])
     q = querry("INSERT INTO abates (idPedidos, idTipoAnimal, peso, condenacoes) VALUES " + stringteste)
-    print(q)
     return q
 
 @API.route("/abates/ida/<int:id>", methods=['PUT']) #edita abates por id(somente para corrigir erros de entrada)
